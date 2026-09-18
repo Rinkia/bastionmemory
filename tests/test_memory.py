@@ -52,6 +52,17 @@ def test_plain_directive_is_review_not_block():
     assert fs and fs[0].kind == "directive"  # shape, but not malice
 
 
+@pytest.mark.parametrize("text", [
+    "run 30996982270 green; release published via PyPI.",   # 'run' as noun
+    "Report/metric change: precision within the tied band.",  # 'Report' as noun
+    "Post-MVP PR batch: 14 PRs reviewed, all approved.",      # 'Post' as noun
+    "override/entrambi = bounds unchanged 9..26.",            # 'override' as noun fragment
+])
+def test_noun_starting_facts_not_flagged(text):
+    # regression: dogfood found generic verb/noun starts flagged as directives
+    assert classify(_entry(text)) == [], text
+
+
 # --- verdict ----------------------------------------------------------------
 def test_snapshot_verdict_block_on_poison():
     entries = [_entry(t) for t in FACTS] + [_entry(t) for t in POISON.values()]

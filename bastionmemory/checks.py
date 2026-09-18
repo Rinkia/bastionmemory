@@ -14,18 +14,29 @@ import re
 
 from .models import Finding, MemoryEntry, normalize
 
-# Entry reads as an instruction aimed at the agent's future behavior.
-_DIRECTIVE_START = re.compile(
+# Strong directive lead-words: an entry starting with one is an instruction aimed at
+# future behavior. These rarely open a declarative fact, so they drive the review-level
+# `directive` finding on their own.
+_DIRECTIVE_STRONG = re.compile(
     r"^(always|never|from now on|whenever|make sure|be sure|ensure|remember (to|that)|"
     r"you must|you should|do not|don'?t|only ever|under no circumstances|"
-    r"ignore|disregard|forget|override|send|forward|upload|delete|run|execute|"
-    r"approve|auto[- ]?approve|disable|enable|skip|bypass|report|email|post|leak|"
-    r"share|transmit|treat|assume|prioriti[sz]e)\b"
+    r"ignore|disregard|forget)\b"
+)
+
+# Imperative verbs also open a directive — but each is a common noun too ("run 123",
+# "Report: ...", "Post-MVP"), so they are FP-prone on their own. They only *gate* the
+# malice detectors (which additionally require a target / autonomy phrase); they do NOT
+# raise a directive finding by themselves.
+_IMPERATIVE_VERB = re.compile(
+    r"^(send|forward|upload|delete|execute|approve|auto[- ]?approve|disable|enable|"
+    r"skip|bypass|leak|transmit|exfiltrate)\b"
 )
 
 
 def is_directive(text: str) -> bool:
-    return bool(_DIRECTIVE_START.match(normalize(text)))
+    """Directive-shaped for the purpose of gating malice detectors."""
+    n = normalize(text)
+    return bool(_DIRECTIVE_STRONG.match(n) or _IMPERATIVE_VERB.match(n))
 
 
 # --- malice detectors -------------------------------------------------------
@@ -78,8 +89,9 @@ def classify(entry: MemoryEntry) -> list[Finding]:
         add("exfil-redirect", "critical", "malice",
             "memory entry instructs sending secrets/data to an external destination")
 
-    # a plain instruction aimed at future behavior, not already flagged as malice
-    if directive and not out:
+    # a plain instruction aimed at future behavior, not already flagged as malice.
+    # STRONG lead-words only — generic imperative verbs are too noun-like to flag alone.
+    if not out and _DIRECTIVE_STRONG.match(normalize(text)):
         add("directive", "medium", "directive",
             "memory entry is a directive aimed at future behavior (memory should hold facts)")
     return out
