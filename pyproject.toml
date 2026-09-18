@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bastionmemory"
+version = "0.1.0"
+description = "Agent memory-poisoning scanner (OWASP Agentic ASI06): detect injected directives disguised as facts in what an AI agent remembers, and diff memory against a baseline to catch poison that appears over time."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Stefano Rizzello", email = "rizzellostefano@gmail.com" }]
+keywords = ["memory-poisoning", "asi06", "ai-agent", "prompt-injection", "security", "claude-code", "agent-security", "owasp-agentic"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies = []
+
+[project.optional-dependencies]
+prompt = ["bastioncorpus>=0.2.0"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+bastionmemory = "bastionmemory.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Rinkia/bastionmemory"
+Repository = "https://github.com/Rinkia/bastionmemory"
+Issues = "https://github.com/Rinkia/bastionmemory/issues"
+
+[tool.setuptools]
+packages = ["bastionmemory"]
