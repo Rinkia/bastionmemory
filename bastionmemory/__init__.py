@@ -11,7 +11,7 @@ stealth, delayed execution.
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .models import Finding, MemoryEntry, ScanReport
 from .scanner import scan

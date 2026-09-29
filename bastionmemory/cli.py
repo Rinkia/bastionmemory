@@ -55,10 +55,10 @@ def main(argv=None) -> int:
     ps.add_argument("--fail-on", default="review", choices=["block", "review", "none"],
                     help="exit non-zero at this verdict or worse (default: review)")
 
-    ph = sub.add_parser("harden", help="emit an agentbastion/bastiongate memory policy")
+    ph = sub.add_parser("harden", help="emit poisoned entries as agentbastion injections.jsonl")
     ph.add_argument("target")
     ph.add_argument("--baseline")
-    ph.add_argument("-o", "--out")
+    ph.add_argument("-o", "--out", help="write injections.jsonl here (default: stdout)")
 
     args = ap.parse_args(argv)
     if args.cmd == "scan":
@@ -106,12 +106,15 @@ def _cmd_harden(args) -> int:
     bpath = _resolve_baseline(args)
     baseline_ids = load_baseline_ids(bpath) if bpath.is_file() else None
     rep = scan_report(args.target, entries, baseline_ids=baseline_ids)
-    yaml = harden.to_policy_yaml(rep)
+    jsonl = harden.to_jsonl(rep)
     if args.out:
-        Path(args.out).write_text(yaml, encoding="utf-8")
-        print(f"wrote policy -> {args.out}")
+        Path(args.out).write_text(jsonl, encoding="utf-8")
+        n = jsonl.count("\n")
+        print(f"wrote {n} injection template(s) -> {args.out}", file=sys.stderr)
+        if n:
+            print(harden.WIRING.format(path=Path(args.out).as_posix()), file=sys.stderr)
     else:
-        sys.stdout.write(yaml)
+        sys.stdout.write(jsonl)
     return 0
 
 
